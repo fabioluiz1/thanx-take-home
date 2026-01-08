@@ -28,6 +28,27 @@ export const apiClient = {
 
     return response.json() as Promise<T>;
   },
+
+  async post<T, D = unknown>(path: string, data: D): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": getUserId(),
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new ApiError(
+        (errorBody as { error?: string }).error || response.statusText,
+        response.status,
+      );
+    }
+
+    return response.json() as Promise<T>;
+  },
 };
 
 export { ApiError };
