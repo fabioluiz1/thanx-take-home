@@ -1,0 +1,103 @@
+repos:
+  # Commit message validation
+  - repo: local
+    hooks:
+      - id: validate-commit-msg
+        name: Validate commit message format
+        entry: scripts/validate-commit-msg
+        language: script
+        stages: [commit-msg]
+
+  # Branch name validation
+  - repo: local
+    hooks:
+      - id: check-branch-name
+        name: Check branch name format
+        entry: scripts/check-branch-name
+        language: script
+        stages: [pre-commit]
+        pass_filenames: false
+        always_run: true
+
+  # Commit author validation
+  - repo: local
+    hooks:
+      - id: validate-commit-author
+        name: Validate commit author
+        entry: scripts/validate-commit-author
+        language: script
+        stages: [pre-commit]
+        pass_filenames: false
+        always_run: true
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.markdownlint.json']
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.14.0
+    hooks:
+      - id: hadolint-docker
+        name: Lint Dockerfiles
+
+  # Ruby linting
+  # Note: RuboCop hook assumes execution from repository root
+  # Git commits must be made from the repository root directory
+  - repo: local
+    hooks:
+      - id: rubocop
+        name: RuboCop
+        entry: bash -c 'cd api && bin/rubocop'
+        language: system
+        files: \.rb$
+        pass_filenames: false
+
+  # Web linting and formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: '^web/.*\.(ts|tsx|json|css)$'
+        stages: [pre-commit]
+        args: ['--write']
+      - id: prettier
+        name: prettier (check-only for CI)
+        files: '^web/.*\.(ts|tsx|json|css)$'
+        stages: [manual]
+        args: ['--check']
+
+  - repo: local
+    hooks:
+      - id: web-eslint
+        name: ESLint (web)
+        entry: bash -c 'files=(); for f in "$@"; do files+=("${f#web/}"); done; cd web && mise exec -- bun x eslint -- "${files[@]}"' --
+        language: system
+        files: '^web/.*\.(ts|tsx)$'
+        pass_filenames: true
+
+  # Terraform validation
+  - repo: local
+    hooks:
+      - id: terraform-validate
+        name: Terraform Validate
+        entry: bash -c 'cd terraform && terraform validate'
+        language: system
+        files: '^terraform/.*\.tf$'
+        pass_filenames: false
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        # Exclude ERB templates which aren't valid YAML until processed
+        exclude: 'database\.yml$'
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
