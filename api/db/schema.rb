@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_08_180644) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_08_204345) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "redemptions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "points_spent", null: false
+    t.datetime "redeemed_at", null: false
+    t.bigint "reward_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["reward_id"], name: "index_redemptions_on_reward_id"
+    t.index ["user_id", "redeemed_at"], name: "index_redemptions_on_user_id_and_redeemed_at"
+    t.index ["user_id"], name: "index_redemptions_on_user_id"
+  end
 
   create_table "rewards", force: :cascade do |t|
     t.boolean "available", default: true, null: false
@@ -32,4 +44,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_180644) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
+
+  add_foreign_key "redemptions", "rewards"
+  add_foreign_key "redemptions", "users"
 end
