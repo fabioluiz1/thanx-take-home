@@ -25,6 +25,7 @@ module Api
       end
 
       test "returns 404 when no users exist and no header" do
+        Redemption.delete_all
         User.delete_all
         get api_v1_users_me_url
 

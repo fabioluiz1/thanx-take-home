@@ -4,10 +4,20 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { RewardsList } from "./RewardsList";
 import rewardsReducer from "../../store/rewardsSlice";
+import userReducer from "../../store/userSlice";
+import redemptionReducer from "../../store/redemptionSlice";
 
 vi.mock("../../services/api", () => ({
   apiClient: {
     get: vi.fn(),
+    post: vi.fn(),
+  },
+  ApiError: class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
   },
 }));
 
@@ -15,7 +25,19 @@ import { apiClient } from "../../services/api";
 
 const createTestStore = () =>
   configureStore({
-    reducer: { rewards: rewardsReducer },
+    reducer: {
+      rewards: rewardsReducer,
+      user: userReducer,
+      redemption: redemptionReducer,
+    },
+    preloadedState: {
+      user: {
+        user: { id: 1, email: "test@example.com", points_balance: 500 },
+        loading: false,
+        error: null,
+      },
+      redemption: { redeeming: false, error: null, lastRedemption: null },
+    },
   });
 
 const renderWithProvider = () => {
