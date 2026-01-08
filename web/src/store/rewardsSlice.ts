@@ -9,9 +9,12 @@ const initialState: RewardsState = {
   fetched: false,
 };
 
-export const fetchRewards = createAsyncThunk("rewards/fetchRewards", async () => {
-  return apiClient.get<Reward[]>("/rewards");
-});
+export const fetchRewards = createAsyncThunk(
+  "rewards/fetchRewards",
+  async () => {
+    return apiClient.get<Reward[]>("/rewards");
+  },
+);
 
 const rewardsSlice = createSlice({
   name: "rewards",
