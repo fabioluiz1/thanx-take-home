@@ -1,13 +1,14 @@
 .card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #fff;
-  transition: box-shadow 0.2s ease;
+  background: var(--color-bg-secondary);
+  transition: box-shadow var(--transition-base) ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .unavailable {
@@ -30,38 +31,38 @@
 .imagePlaceholder {
   width: 100%;
   height: 100%;
-  background: #f3f4f6;
+  background: var(--color-bg-tertiary);
 }
 
 .outOfStock {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #ef4444;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: var(--color-status-error);
+  color: var(--color-text-on-brand);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .content {
-  padding: 16px;
+  padding: var(--spacing-md);
 }
 
 .name {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .description {
-  margin: 0 0 12px;
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.5;
-  max-height: 3em; /* Fallback for browsers without line-clamp */
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  max-height: 3em;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -70,11 +71,11 @@
 
 .pointsBadge {
   display: inline-block;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  background: var(--color-brand-light);
+  color: var(--color-action-primary);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-md);
 }
