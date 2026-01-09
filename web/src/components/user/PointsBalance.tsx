@@ -4,13 +4,15 @@ import { fetchCurrentUser } from "../../store/userSlice";
 
 export function PointsBalance() {
   const dispatch = useAppDispatch();
-  const { user, loading, error } = useAppSelector((state) => state.user);
+  const { user, loading, error, fetched } = useAppSelector(
+    (state) => state.user,
+  );
 
   useEffect(() => {
-    if (!user && !loading) {
+    if (!fetched && !loading) {
       dispatch(fetchCurrentUser());
     }
-  }, [dispatch, user, loading]);
+  }, [dispatch, fetched, loading]);
 
   if (loading) {
     return <span data-testid="points-loading">Loading...</span>;
