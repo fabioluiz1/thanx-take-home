@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { Provider } from "react-redux";
+import { BrowserRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import userReducer from "./store/userSlice";
@@ -48,7 +49,9 @@ describe("App", () => {
   it("renders Rewards App heading", async () => {
     render(
       <Provider store={createTestStore()}>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </Provider>,
     );
     expect(screen.getByText(/Rewards App/i)).toBeInTheDocument();
