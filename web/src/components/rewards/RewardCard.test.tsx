@@ -45,7 +45,7 @@ const createTestStore = (userPoints: number = 500) =>
         loading: false,
         error: null,
       },
-      rewards: { rewards: [], loading: false, error: null },
+      rewards: { rewards: [], loading: false, error: null, fetched: false },
       redemption: { redeeming: false, error: null, lastRedemption: null },
     },
   });
