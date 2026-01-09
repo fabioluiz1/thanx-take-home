@@ -278,6 +278,70 @@ describe("RewardList", () => {
 });
 ```
 
+**Testing Redux Components (async thunks):**
+
+Always include complete `preloadedState` when testing Redux-connected components:
+
+```tsx
+import { render, screen, waitFor } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import { MyComponent } from "./MyComponent";
+import mySliceReducer from "../../store/mySlice";
+import userReducer from "../../store/userSlice";
+
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      mySlice: mySliceReducer,
+      user: userReducer,
+    },
+    preloadedState: {
+      // ✅ REQUIRED: Include ALL reducers in preloadedState
+      mySlice: {
+        items: [],
+        loading: false,
+        error: null,
+        fetched: false, // Hook will dispatch if fetched=false && loading=false
+      },
+      user: {
+        user: null,
+        loading: false,
+        error: null,
+      },
+    },
+  });
+
+describe("MyComponent", () => {
+  it("handles async loading", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue(mockData);
+    const store = createTestStore();
+    render(
+      <Provider store={store}>
+        <MyComponent />
+      </Provider>,
+    );
+
+    // ✅ REQUIRED: Always set explicit timeout on async waits
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("content")).toBeInTheDocument();
+      },
+      { timeout: 2000 }, // Prevents indefinite hangs if fetch fails
+    );
+  });
+});
+```
+
+**Common Redux Testing Pitfalls:**
+
+| Problem | Symptom | Solution |
+|---------|---------|----------|
+| Missing reducer in preloadedState | Tests hang silently | Include all reducers with complete state shape |
+| Missing `fetched: false` flag | Thunk doesn't dispatch | Set `fetched: false` to trigger useEffect dispatch |
+| No timeout on waitFor() | Tests hang indefinitely | Always use `{ timeout: 2000 }` |
+| Mock returns undefined | Component fails silently | Ensure mock returns data, not just `undefined` |
+
 ### Terraform (terraform/)
 
 **Style**: Terraform fmt (auto-formatted)

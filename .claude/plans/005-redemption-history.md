@@ -162,3 +162,52 @@ fetchRedemptionHistory -> GET /api/v1/redemptions
 - Eager loading with `includes(:reward)` prevents N+1 queries
 - Keep redemptionSlice separate from new redemptionHistorySlice (different
   concerns: one handles single redemption action, other handles history list)
+
+## Lessons Learned
+
+### Frontend Testing - Redux + Async Thunks
+
+**Problem:** RedemptionHistory tests hung indefinitely during test runs.
+
+**Root Causes:**
+1. Test store's `preloadedState` didn't include `redemptionHistory` slice
+   - Component hook saw `fetched: false && loading: false`
+   - Triggered `fetchRedemptionHistory()` async thunk dispatch
+   - Tests waited for unresolved Promise with no timeout
+2. `waitFor()` calls had no explicit timeout
+   - Default 1000ms timeout was insufficient for stalled async operations
+   - Tests would hang indefinitely waiting for state changes that never came
+
+**Solution:**
+1. **Always include all reducers in test store's preloadedState**
+   - Even if using default values, explicit state prevents accidental dispatches
+   - Match reducer shape exactly to avoid missing properties
+2. **Set explicit timeout on all async operations**
+   - Use `waitFor(..., { timeout: 2000 })` to prevent indefinite waits
+   - Helps identify when components aren't updating as expected
+3. **Debug async issues with timeouts first**
+   - If test hangs, add explicit timeout to see actual error
+   - Timeout messages are more diagnostic than infinite waits
+
+**Key Pattern:**
+```typescript
+// ❌ Wrong: Missing preloadedState causes unnecessary dispatches
+const store = configureStore({
+  reducer: { component: componentReducer }
+  // Missing: other reducers in preloadedState
+});
+
+// ✅ Right: Complete preloadedState structure
+const store = configureStore({
+  reducer: { component: componentReducer, redux: reduxReducer },
+  preloadedState: {
+    component: { /* complete state */ },
+    redux: { /* complete state */ }
+  }
+});
+
+// ✅ Right: Always add timeout to async waits
+await waitFor(() => {
+  expect(element).toBeInTheDocument();
+}, { timeout: 2000 });
+```
