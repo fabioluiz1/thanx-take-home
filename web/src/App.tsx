@@ -3,6 +3,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PointsBalance } from "./components/user/PointsBalance";
 import { RewardsList } from "./components/rewards/RewardsList";
 import { Navigation } from "./components/navigation/Navigation";
+import { RedemptionHistory } from "./components/redemptions/RedemptionHistory";
 
 export default function App() {
   return (
@@ -15,10 +16,7 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<RewardsList />} />
-          <Route
-            path="/history"
-            element={<div>Redemption History Placeholder</div>}
-          />
+          <Route path="/history" element={<RedemptionHistory />} />
         </Routes>
       </main>
     </ErrorBoundary>

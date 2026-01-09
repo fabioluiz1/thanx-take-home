@@ -7,6 +7,7 @@ import App from "./App";
 import userReducer from "./store/userSlice";
 import rewardsReducer from "./store/rewardsSlice";
 import redemptionReducer from "./store/redemptionSlice";
+import redemptionHistoryReducer from "./store/redemptionHistorySlice";
 
 vi.mock("./services/api", () => ({
   apiClient: {
@@ -42,6 +43,7 @@ const createTestStore = () =>
       user: userReducer,
       rewards: rewardsReducer,
       redemption: redemptionReducer,
+      redemptionHistory: redemptionHistoryReducer,
     },
   });
 
