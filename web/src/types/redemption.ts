@@ -12,3 +12,10 @@ export interface RedemptionState {
   error: string | null;
   lastRedemption: Redemption | null;
 }
+
+export interface RedemptionHistoryState {
+  redemptions: Redemption[];
+  loading: boolean;
+  error: string | null;
+  fetched: boolean;
+}
