@@ -170,6 +170,7 @@ fetchRedemptionHistory -> GET /api/v1/redemptions
 **Problem:** RedemptionHistory tests hung indefinitely during test runs.
 
 **Root Causes:**
+
 1. Test store's `preloadedState` didn't include `redemptionHistory` slice
    - Component hook saw `fetched: false && loading: false`
    - Triggered `fetchRedemptionHistory()` async thunk dispatch
@@ -179,6 +180,7 @@ fetchRedemptionHistory -> GET /api/v1/redemptions
    - Tests would hang indefinitely waiting for state changes that never came
 
 **Solution:**
+
 1. **Always include all reducers in test store's preloadedState**
    - Even if using default values, explicit state prevents accidental dispatches
    - Match reducer shape exactly to avoid missing properties
@@ -190,6 +192,7 @@ fetchRedemptionHistory -> GET /api/v1/redemptions
    - Timeout messages are more diagnostic than infinite waits
 
 **Key Pattern:**
+
 ```typescript
 // ❌ Wrong: Missing preloadedState causes unnecessary dispatches
 const store = configureStore({
