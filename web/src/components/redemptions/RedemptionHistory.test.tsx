@@ -34,6 +34,12 @@ const createTestStore = () =>
         loading: false,
         error: null,
       },
+      redemptionHistory: {
+        redemptions: [],
+        loading: false,
+        error: null,
+        fetched: false,
+      },
     },
   });
 
@@ -66,11 +72,14 @@ describe("RedemptionHistory", () => {
 
     // Resolve the pending promise to allow cleanup
     resolvePromise!([]);
-    await waitFor(() => {
-      expect(
-        screen.queryByTestId("redemptions-loading"),
-      ).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByTestId("redemptions-loading"),
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
   });
 
   it("displays redemptions after loading", async () => {
@@ -105,9 +114,12 @@ describe("RedemptionHistory", () => {
     vi.mocked(apiClient.get).mockResolvedValue(mockRedemptions);
     renderWithProvider();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("redemptions-list")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("redemptions-list")).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
 
     expect(screen.getByText("Free Coffee")).toBeInTheDocument();
     expect(screen.getByText("Free Pastry")).toBeInTheDocument();
@@ -119,9 +131,12 @@ describe("RedemptionHistory", () => {
     vi.mocked(apiClient.get).mockRejectedValue(new Error("Network error"));
     renderWithProvider();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("redemptions-error")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("redemptions-error")).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
 
     expect(
       screen.getByText(
@@ -134,9 +149,12 @@ describe("RedemptionHistory", () => {
     vi.mocked(apiClient.get).mockResolvedValue([]);
     renderWithProvider();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("redemptions-empty")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("redemptions-empty")).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
 
     expect(
       screen.getByText(
@@ -151,8 +169,11 @@ describe("RedemptionHistory", () => {
 
     expect(screen.getByText("Redemption History")).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByTestId("redemptions-empty")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("redemptions-empty")).toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
   });
 });
