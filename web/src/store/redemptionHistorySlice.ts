@@ -46,6 +46,7 @@ const redemptionHistorySlice = createSlice({
       .addCase(fetchRedemptionHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch redemption history";
+        state.fetched = true;
       });
   },
 });
