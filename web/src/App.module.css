@@ -1,17 +1,8 @@
-.header {
-  background-color: var(--color-bg-primary);
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header h1 {
-  color: var(--color-text-on-dark);
-  font-size: var(--font-size-2xl);
-  margin: 0 0 var(--spacing-md) 0;
-}
-
 .main {
-  background-color: var(--color-bg-primary);
-  min-height: calc(100vh - 200px);
-  padding: var(--spacing-lg) 0;
+  background-color: var(--color-bg-secondary);
+  min-height: calc(100vh - 100px);
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-lg);
+  padding-left: 0;
+  padding-right: 0;
 }
