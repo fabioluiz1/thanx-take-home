@@ -3,7 +3,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       get "users/me", to: "users#me"
       resources :rewards, only: [ :index ]
-      resources :redemptions, only: [ :create ]
+      resources :redemptions, only: [ :index, :create ]
     end
   end
 

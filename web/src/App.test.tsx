@@ -1,11 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { Provider } from "react-redux";
+import { BrowserRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import userReducer from "./store/userSlice";
 import rewardsReducer from "./store/rewardsSlice";
 import redemptionReducer from "./store/redemptionSlice";
+import redemptionHistoryReducer from "./store/redemptionHistorySlice";
 
 vi.mock("./services/api", () => ({
   apiClient: {
@@ -41,6 +43,7 @@ const createTestStore = () =>
       user: userReducer,
       rewards: rewardsReducer,
       redemption: redemptionReducer,
+      redemptionHistory: redemptionHistoryReducer,
     },
   });
 
@@ -48,7 +51,9 @@ describe("App", () => {
   it("renders Rewards App heading", async () => {
     render(
       <Provider store={createTestStore()}>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </Provider>,
     );
     expect(screen.getByText(/Rewards App/i)).toBeInTheDocument();
