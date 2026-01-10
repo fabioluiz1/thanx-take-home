@@ -55,7 +55,6 @@ export function RewardsList() {
 
   return (
     <section className={styles.container}>
-      <h2 className={styles.heading}>Available Rewards</h2>
       <RewardsContent loading={loading} error={error} rewards={rewards} />
     </section>
   );

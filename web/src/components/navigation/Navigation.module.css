@@ -3,9 +3,9 @@
   align-items: center;
   gap: var(--spacing-lg);
   padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--color-bg-primary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: var(--spacing-lg);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: 0;
 }
 
 .logoLink {
@@ -24,7 +24,7 @@
 .link {
   padding: var(--spacing-sm) var(--spacing-md);
   text-decoration: none;
-  color: var(--color-text-on-dark);
+  color: var(--color-text-primary);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   font-weight: var(--font-weight-medium);
@@ -38,4 +38,10 @@
 .link:global(.active) {
   background-color: var(--color-brand-primary);
   color: var(--color-text-on-brand);
+}
+
+.points {
+  margin-left: auto;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }

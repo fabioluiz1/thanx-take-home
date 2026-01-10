@@ -1,4 +1,4 @@
-import thanxLogo from "./thanx-logo.avif";
+import thanxLogo from "./thanx-logo.png";
 import styles from "./ThanxLogo.module.css";
 
 export function ThanxLogo() {

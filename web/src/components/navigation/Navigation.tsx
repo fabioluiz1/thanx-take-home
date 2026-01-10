@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ThanxLogo } from "../branding/ThanxLogo";
+import { PointsBalance } from "../user/PointsBalance";
 import styles from "./Navigation.module.css";
 
 export function Navigation() {
@@ -12,9 +13,12 @@ export function Navigation() {
         <Link to="/" className={styles.link}>
           Rewards
         </Link>
-        <Link to="/history" className={styles.link}>
-          History
+        <Link to="/redemptions" className={styles.link}>
+          Redemptions
         </Link>
+      </div>
+      <div className={styles.points}>
+        <PointsBalance />
       </div>
     </nav>
   );
