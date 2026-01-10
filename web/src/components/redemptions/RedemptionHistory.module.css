@@ -1,57 +1,58 @@
 .container {
-  padding: 24px;
-  max-width: 1200px;
+  padding: var(--spacing-lg);
+  max-width: var(--max-width-container);
   margin: 0 auto;
 }
 
 .heading {
-  margin: 0 0 24px;
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
+  margin: 0 0 var(--spacing-lg);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-on-dark);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .message {
   text-align: center;
-  padding: 48px 24px;
-  background: #f9fafb;
-  border-radius: 8px;
-  color: #6b7280;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
 }
 
 .message p {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .item {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  transition: box-shadow 0.2s;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  transition: box-shadow var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .item:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .itemContent {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-md);
   align-items: flex-start;
 }
 
 .itemImage {
   width: 80px;
   height: 80px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -62,25 +63,25 @@
 }
 
 .itemName {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
+  margin: 0 0 var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .itemInfo {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .itemPoints {
-  font-weight: 600;
-  color: #059669;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-status-success);
 }
 
 .itemDate {
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }

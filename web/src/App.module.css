@@ -1,0 +1,8 @@
+.main {
+  background-color: var(--color-bg-secondary);
+  min-height: calc(100vh - 100px);
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-lg);
+  padding-left: 0;
+  padding-right: 0;
+}
