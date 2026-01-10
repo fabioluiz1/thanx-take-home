@@ -9,8 +9,6 @@ module SentryContext
 
   def set_sentry_context
     Sentry.set_tags(request_id: request.request_id)
-
-    # Placeholder for future authentication
-    # Sentry.set_user(id: current_user.id) if current_user
+    Sentry.set_user(id: current_user.id) if current_user
   end
 end

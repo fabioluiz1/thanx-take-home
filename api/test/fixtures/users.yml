@@ -1,0 +1,7 @@
+demo:
+  email: demo@example.com
+  points_balance: 500
+
+empty_balance:
+  email: empty@example.com
+  points_balance: 0
