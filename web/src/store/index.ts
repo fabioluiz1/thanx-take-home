@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./userSlice";
 import rewardsReducer from "./rewardsSlice";
+import redemptionReducer from "./redemptionSlice";
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
     rewards: rewardsReducer,
+    redemption: redemptionReducer,
   },
 });
 

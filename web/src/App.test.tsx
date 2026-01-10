@@ -5,6 +5,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import userReducer from "./store/userSlice";
 import rewardsReducer from "./store/rewardsSlice";
+import redemptionReducer from "./store/redemptionSlice";
 
 vi.mock("./services/api", () => ({
   apiClient: {
@@ -23,12 +24,24 @@ vi.mock("./services/api", () => ({
       }
       return Promise.reject(new Error("Unknown path"));
     }),
+    post: vi.fn(),
+  },
+  ApiError: class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
   },
 }));
 
 const createTestStore = () =>
   configureStore({
-    reducer: { user: userReducer, rewards: rewardsReducer },
+    reducer: {
+      user: userReducer,
+      rewards: rewardsReducer,
+      redemption: redemptionReducer,
+    },
   });
 
 describe("App", () => {

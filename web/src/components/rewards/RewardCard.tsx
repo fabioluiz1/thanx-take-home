@@ -1,5 +1,12 @@
 import { useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  redeemReward,
+  clearRedemptionError,
+} from "../../store/redemptionSlice";
 import type { Reward } from "../../types/reward";
+import { RedeemButton } from "./RedeemButton";
+import { RedemptionConfirmModal } from "./RedemptionConfirmModal";
 import styles from "./RewardCard.module.css";
 
 interface RewardCardProps {
@@ -8,9 +15,30 @@ interface RewardCardProps {
 
 export function RewardCard({ reward }: RewardCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.user);
+  const { redeeming, error } = useAppSelector((state) => state.redemption);
   const cardClasses = [styles.card, !reward.available && styles.unavailable]
     .filter(Boolean)
     .join(" ");
+
+  const handleOpenModal = () => {
+    dispatch(clearRedemptionError());
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    dispatch(clearRedemptionError());
+  };
+
+  const handleConfirmRedeem = async () => {
+    const result = await dispatch(redeemReward(reward.id));
+    if (redeemReward.fulfilled.match(result)) {
+      setShowModal(false);
+    }
+  };
 
   return (
     <article className={cardClasses} data-testid="reward-card">
@@ -39,7 +67,22 @@ export function RewardCard({ reward }: RewardCardProps) {
         <span className={styles.pointsBadge} data-testid="points-badge">
           {reward.points_cost.toLocaleString()} pts
         </span>
+        <RedeemButton
+          reward={reward}
+          userPoints={user?.points_balance ?? 0}
+          onClick={handleOpenModal}
+          disabled={redeeming}
+        />
       </div>
+      <RedemptionConfirmModal
+        reward={reward}
+        userPoints={user?.points_balance ?? 0}
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmRedeem}
+        isRedeeming={redeeming}
+        error={error}
+      />
     </article>
   );
 }

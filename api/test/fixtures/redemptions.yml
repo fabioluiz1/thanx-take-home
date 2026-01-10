@@ -1,0 +1,5 @@
+demo_redemption:
+  user: demo
+  reward: free_coffee
+  points_spent: 100
+  redeemed_at: 2026-01-08 12:00:00
