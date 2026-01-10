@@ -1,0 +1,20 @@
+free_coffee:
+  name: Free Coffee
+  description: Enjoy a complimentary coffee of your choice
+  points_cost: 100
+  image_url: https://example.com/coffee.jpg
+  available: true
+
+free_dessert:
+  name: Free Dessert
+  description: Choose any dessert from our menu
+  points_cost: 250
+  image_url: https://example.com/dessert.jpg
+  available: true
+
+unavailable_reward:
+  name: Limited Edition Item
+  description: This reward is currently unavailable
+  points_cost: 500
+  image_url: https://example.com/limited.jpg
+  available: false

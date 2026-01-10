@@ -4,20 +4,31 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import userReducer from "./store/userSlice";
+import rewardsReducer from "./store/rewardsSlice";
 
 vi.mock("./services/api", () => ({
   apiClient: {
-    get: vi.fn().mockResolvedValue({
-      id: 1,
-      email: "test@example.com",
-      points_balance: 500,
+    get: vi.fn().mockImplementation((path: string) => {
+      if (path === "/users/me") {
+        return Promise.resolve({
+          id: 1,
+          email: "test@example.com",
+          points_balance: 500,
+        });
+      }
+      if (path === "/rewards") {
+        return Promise.resolve([
+          { id: 1, name: "Free Coffee", points_cost: 100, available: true },
+        ]);
+      }
+      return Promise.reject(new Error("Unknown path"));
     }),
   },
 }));
 
 const createTestStore = () =>
   configureStore({
-    reducer: { user: userReducer },
+    reducer: { user: userReducer, rewards: rewardsReducer },
   });
 
 describe("App", () => {
