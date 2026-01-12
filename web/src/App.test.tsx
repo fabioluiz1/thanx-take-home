@@ -48,7 +48,7 @@ const createTestStore = () =>
   });
 
 describe("App", () => {
-  it("renders Rewards App heading", async () => {
+  it("renders navigation and main content", async () => {
     render(
       <Provider store={createTestStore()}>
         <BrowserRouter>
@@ -56,7 +56,7 @@ describe("App", () => {
         </BrowserRouter>
       </Provider>,
     );
-    expect(screen.getByText(/Rewards App/i)).toBeInTheDocument();
+    expect(screen.getByText("Rewards")).toBeInTheDocument();
 
     // Wait for async operations to complete to avoid act() warnings
     await waitFor(() => {

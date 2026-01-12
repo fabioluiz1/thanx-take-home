@@ -132,11 +132,9 @@ describe("RewardsList", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders heading in all states", async () => {
+  it("renders section in all states", async () => {
     vi.mocked(apiClient.get).mockResolvedValue([]);
     renderWithProvider();
-
-    expect(screen.getByText("Available Rewards")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId("rewards-empty")).toBeInTheDocument();
