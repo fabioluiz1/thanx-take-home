@@ -15,13 +15,11 @@ Infrastructure as Code for deploying the Rewards App to AWS ECS Fargate.
 ## Prerequisites
 
 - mise (installs AWS CLI, Terraform automatically via `.mise.toml`)
-- AWS credentials configured (`aws configure`)
-- **AdministratorAccess** permission set for `terraform apply` and
-  `terraform destroy` (creates/deletes IAM resources)
-  - PowerUserAccess sufficient for `terraform init`, `terraform plan`,
-    `terraform output`
-  - See [AWS Setup Guide](../docs/aws-setup.md#iam-permissions-for-terraform)
-    for profile configuration
+- AWS SSO configured with an `admin` profile (AdministratorAccess)
+  - Follow [AWS Setup Guide - AWS CLI Setup](../docs/aws-setup.md#aws-cli-setup)
+  - Admin profile required for `terraform apply` and `terraform destroy`
+  - **Recommended**: Set admin as default profile to avoid typing
+    `AWS_PROFILE=admin` on every command
 - GitHub CLI (for automated secrets setup)
 
 Install tools:
@@ -63,10 +61,11 @@ export TF_VAR_budget_email="your-email@example.com"
 
 ```bash
 terraform plan
-AWS_PROFILE=admin terraform apply
+terraform apply
 ```
 
-**Note**: Requires AdministratorAccess to create IAM roles and OIDC providers.
+**Note**: Requires AdministratorAccess profile. If you didn't set admin as default,
+use `AWS_PROFILE=admin terraform apply` instead.
 
 This creates:
 
@@ -123,10 +122,11 @@ See plan documentation for detailed cost breakdown.
 ### Destroy All Infrastructure
 
 ```bash
-AWS_PROFILE=admin terraform destroy -auto-approve
+terraform destroy -auto-approve
 ```
 
-**Note**: Requires AdministratorAccess to delete IAM resources.
+**Note**: Requires AdministratorAccess profile. If you didn't set admin as default,
+use `AWS_PROFILE=admin terraform destroy -auto-approve` instead.
 
 ### Delete Backend (Optional)
 
@@ -179,11 +179,12 @@ Solution:
 # Verify current profile
 aws sts get-caller-identity
 
-# Test IAM permissions
-aws iam list-roles --max-items 1
+# Test IAM permissions with admin profile
+aws iam list-roles --max-items 1 --profile admin
 
-# If AccessDenied, switch to admin profile
-AWS_PROFILE=admin terraform apply
+# If you haven't set admin as default, explicitly use the admin profile
+export AWS_PROFILE=admin
+terraform apply
 ```
 
 Resources requiring IAM permissions:

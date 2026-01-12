@@ -9,11 +9,13 @@ Complete guide for deploying and managing the Rewards App on AWS ECS Fargate.
 
 ### Initial AWS Infrastructure Setup
 
-You must complete these steps before your first deployment. Skip to [Deployment Process](#deployment-process) if already done.
+You must complete these steps before your first deployment. Skip to
+[Deployment Process](#deployment-process) if already done.
 
 #### Step 1: Complete AWS Setup
 
 Follow the **[AWS Setup Guide](aws-setup.md)** to:
+
 - Set up AWS SSO and IAM Identity Center
 - Configure AWS CLI authentication
 - Create AdministratorAccess profile for Terraform
@@ -37,61 +39,97 @@ export TF_VAR_budget_email="your-email@example.com"
 set -Ux TF_VAR_budget_email "your-email@example.com"
 ```
 
-**Note**: This email will receive budget alerts when you reach 80%, 100%, and forecasted 100% of the $10/month budget.
+**Note**: This email will receive budget alerts at 80%, 100%, and forecasted 100%
+of the $10/month budget.
 
-#### Step 3: Authenticate with AWS SSO
+#### Step 3: Configure AWS SSO and Admin Profile
 
-Before bootstrapping, ensure your AWS SSO session is valid:
+Create the `admin` profile with AdministratorAccess:
 
 ```bash
-aws sso login --profile admin
+aws configure sso --profile admin
 ```
 
-If authentication fails, you may need to reconfigure your SSO profile. See the [AWS Setup Guide](aws-setup.md#configure-aws-cli-authentication) for details.
+Enter these values:
 
-#### Step 4: Bootstrap Terraform State Backend
+- **SSO session name**: `rewards-app-admin`
+- **SSO start URL**: Your AWS SSO portal URL (e.g., `https://rewards-app.awsapps.com/start`)
+- **SSO region**: `ca-west-1` (or your configured region)
+- **SSO registration scopes**: `sso:account:access` (default, just press enter)
+
+The CLI will open your browser to authenticate. After authentication:
+
+- Select your AWS account
+- Choose the **AdministratorAccess** permission set
+- Default region: `ca-west-1`
+- Default output format: `json`
+
+#### Step 4: Set Admin Profile as Default
+
+To avoid typing `AWS_PROFILE=admin` repeatedly, set it as your default:
+
+```bash
+# Bash/Zsh (temporary, current session only)
+export AWS_PROFILE=admin
+
+# Or persistently add to ~/.bashrc or ~/.zshrc
+echo 'export AWS_PROFILE=admin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Then authenticate:
+
+```bash
+aws sso login
+```
+
+#### Step 5: Bootstrap Terraform State Backend
 
 ```bash
 cd terraform
-AWS_PROFILE=admin ./bootstrap.sh
+./bootstrap.sh
 ```
 
 This creates:
+
 - S3 bucket for Terraform state (`rewards-app-tf-state-<account-id>`)
 - DynamoDB table for state locking (`rewards-app-tf-locks`)
 
 **Cost**: <$1/month
 
-#### Step 5: Plan Infrastructure Changes
+#### Step 6: Plan Infrastructure Changes
 
 From the `terraform/` directory:
 
 ```bash
-AWS_PROFILE=admin terraform plan -out=tfplan
+terraform plan -out=tfplan
 ```
 
 Review the plan carefully. This shows all AWS resources that will be created:
+
 - ECS cluster and services (web and API)
 - RDS PostgreSQL database
 - ECR repositories
 - IAM roles and policies
 - VPC and networking
 
-#### Step 6: Apply Infrastructure Changes
+#### Step 7: Apply Infrastructure Changes
 
 Apply the plan with AdministratorAccess (required for IAM resource creation):
 
 ```bash
-AWS_PROFILE=admin terraform apply tfplan
+terraform apply tfplan
 ```
 
-**Requires**: AdministratorAccess SSO profile. See [IAM Permissions for Terraform](aws-setup.md#iam-permissions-for-terraform) in AWS Setup Guide.
+**Requires**: AdministratorAccess SSO profile. See
+[IAM Permissions for Terraform](aws-setup.md#iam-permissions-for-terraform) in AWS
+Setup Guide.
 
 **Time**: 10-15 minutes (RDS creation takes longest)
 
 **Cost**: ~$27/month for demo/testing environment (Fargate Spot, RDS micro, CloudWatch)
 
-#### Step 7: Configure GitHub Actions Secrets
+#### Step 8: Configure GitHub Actions Secrets
 
 From the `terraform/` directory:
 
@@ -100,6 +138,7 @@ From the `terraform/` directory:
 ```
 
 This automatically configures GitHub repository secrets:
+
 - `AWS_ACCOUNT_ID`: Your AWS account ID
 - `AWS_REGION`: AWS region (ca-west-1)
 - `OIDC_ROLE_ARN`: Role ARN for GitHub Actions authentication
@@ -116,14 +155,16 @@ Check that infrastructure is running:
 
 ```bash
 # List ECS cluster
-aws ecs describe-clusters --clusters rewards-app-cluster --profile admin
+aws ecs describe-clusters --clusters rewards-app-cluster
 
 # List ECR repositories
-aws ecr describe-repositories --profile admin
+aws ecr describe-repositories
 
 # Check RDS instance
-aws rds describe-db-instances --db-instance-identifier rewards-app-db --profile admin
+aws rds describe-db-instances --db-instance-identifier rewards-app-db
 ```
+
+If you didn't set admin as default, add `--profile admin` to each command.
 
 ## Deployment Process
 
@@ -420,10 +461,11 @@ Task stops with "OutOfMemoryError":
 
    ```bash
    cd terraform
-   AWS_PROFILE=admin terraform apply
+   terraform apply
    ```
 
    **Note**: Requires AdministratorAccess profile for IAM permissions.
+   If you didn't set admin as default, use `AWS_PROFILE=admin terraform apply`.
 
 3. Force new deployment:
 
@@ -455,10 +497,11 @@ Apply changes:
 
 ```bash
 cd terraform
-AWS_PROFILE=admin terraform apply
+terraform apply
 ```
 
 **Note**: Requires AdministratorAccess profile for IAM permissions.
+If you didn't set admin as default, use `AWS_PROFILE=admin terraform apply`.
 
 ### Horizontal Scaling (Task Count)
 

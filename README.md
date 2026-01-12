@@ -173,10 +173,11 @@ Destroy all AWS infrastructure:
 
 ```bash
 cd terraform
-AWS_PROFILE=admin terraform destroy -auto-approve
+terraform destroy -auto-approve
 ```
 
-**Note**: Requires AdministratorAccess profile. See
+**Note**: Requires AdministratorAccess profile. If you didn't set admin as default,
+use `AWS_PROFILE=admin terraform destroy -auto-approve` instead. See
 [AWS Setup Guide](docs/aws-setup.md#iam-permissions-for-terraform) for
 profile requirements.
 
