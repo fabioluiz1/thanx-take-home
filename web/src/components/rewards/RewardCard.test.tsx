@@ -44,8 +44,9 @@ const createTestStore = (userPoints: number = 500) =>
         user: { id: 1, email: "test@example.com", points_balance: userPoints },
         loading: false,
         error: null,
+        fetched: false,
       },
-      rewards: { rewards: [], loading: false, error: null },
+      rewards: { rewards: [], loading: false, error: null, fetched: false },
       redemption: { redeeming: false, error: null, lastRedemption: null },
     },
   });

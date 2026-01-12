@@ -1,6 +1,13 @@
 module Api
   module V1
     class RedemptionsController < ApplicationController
+      def index
+        redemptions = current_user.redemptions
+                                  .includes(:reward)
+                                  .order(redeemed_at: :desc)
+        render json: RedemptionResource.new(redemptions).serializable_hash
+      end
+
       def create
         raise ArgumentError, "reward_id is required" unless params[:reward_id].present?
 
