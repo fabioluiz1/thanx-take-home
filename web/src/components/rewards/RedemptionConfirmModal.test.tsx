@@ -46,7 +46,9 @@ describe("RedemptionConfirmModal", () => {
         userPoints={5000}
       />,
     );
-    expect(screen.getByTestId("redemption-cost")).toHaveTextContent("1,500 pts");
+    expect(screen.getByTestId("redemption-cost")).toHaveTextContent(
+      "1,500 pts",
+    );
     expect(screen.getByTestId("balance-after")).toHaveTextContent("3,500 pts");
   });
 

@@ -22,7 +22,8 @@ export const apiClient = {
     });
 
     if (!response.ok) {
-      const message = response.statusText || `Request failed with status ${response.status}`;
+      const message =
+        response.statusText || `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status);
     }
 

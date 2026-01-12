@@ -7,7 +7,8 @@ export function RedemptionItemSkeleton() {
         <div
           className={styles.itemImage}
           style={{
-            background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
+            background:
+              "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
             backgroundSize: "200% 100%",
             animation: "shimmer 1.5s infinite",
           }}
@@ -18,7 +19,8 @@ export function RedemptionItemSkeleton() {
               height: "24px",
               width: "60%",
               marginBottom: "8px",
-              background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
+              background:
+                "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
               backgroundSize: "200% 100%",
               animation: "shimmer 1.5s infinite",
               borderRadius: "4px",
@@ -28,7 +30,8 @@ export function RedemptionItemSkeleton() {
             style={{
               height: "16px",
               width: "40%",
-              background: "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
+              background:
+                "linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)",
               backgroundSize: "200% 100%",
               animation: "shimmer 1.5s infinite",
               borderRadius: "4px",

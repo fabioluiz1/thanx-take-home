@@ -2,35 +2,156 @@
 
 Complete guide for deploying and managing the Rewards App on AWS ECS Fargate.
 
+## Prerequisites
+
+**Infrastructure setup only needs to happen once.** After initial setup, use the
+[Deployment Process](#deployment-process) section for ongoing deployments.
+
+### Initial AWS Infrastructure Setup
+
+You must complete these steps before your first deployment. Skip to [Deployment Process](#deployment-process) if already done.
+
+#### Step 1: Complete AWS Setup
+
+Follow the **[AWS Setup Guide](aws-setup.md)** to:
+- Set up AWS SSO and IAM Identity Center
+- Configure AWS CLI authentication
+- Create AdministratorAccess profile for Terraform
+
+#### Step 2: Install Tools and Set Environment Variables
+
+From the project root directory:
+
+```bash
+# Install all project tools (aws, terraform, ruby, etc.)
+mise install
+```
+
+Set your email for AWS cost alerts (required for Terraform):
+
+```bash
+# Bash/Zsh (temporary, current session only)
+export TF_VAR_budget_email="your-email@example.com"
+
+# Fish (persistent, stored in ~/.config/fish/fish_variables)
+set -Ux TF_VAR_budget_email "your-email@example.com"
+```
+
+**Note**: This email will receive budget alerts when you reach 80%, 100%, and forecasted 100% of the $10/month budget.
+
+#### Step 3: Bootstrap Terraform State Backend
+
+```bash
+cd terraform
+./bootstrap.sh
+```
+
+This creates:
+- S3 bucket for Terraform state (`rewards-app-tf-state-<account-id>`)
+- DynamoDB table for state locking (`rewards-app-tf-locks`)
+
+**Cost**: <$1/month
+
+#### Step 4: Plan Infrastructure Changes
+
+From the `terraform/` directory:
+
+```bash
+terraform plan -out=tfplan
+```
+
+Review the plan carefully. This shows all AWS resources that will be created:
+- ECS cluster and services (web and API)
+- RDS PostgreSQL database
+- ECR repositories
+- IAM roles and policies
+- VPC and networking
+
+#### Step 5: Apply Infrastructure Changes
+
+Apply the plan with AdministratorAccess (required for IAM resource creation):
+
+```bash
+AWS_PROFILE=admin terraform apply tfplan
+```
+
+**Requires**: AdministratorAccess SSO profile. See [IAM Permissions for Terraform](aws-setup.md#iam-permissions-for-terraform) in AWS Setup Guide.
+
+**Time**: 10-15 minutes (RDS creation takes longest)
+
+**Cost**: ~$27/month for demo/testing environment (Fargate Spot, RDS micro, CloudWatch)
+
+#### Step 6: Configure GitHub Actions Secrets
+
+From the `terraform/` directory:
+
+```bash
+./setup-github-secrets.sh
+```
+
+This automatically configures GitHub repository secrets:
+- `AWS_ACCOUNT_ID`: Your AWS account ID
+- `AWS_REGION`: AWS region (ca-west-1)
+- `OIDC_ROLE_ARN`: Role ARN for GitHub Actions authentication
+- `ECR_REGISTRY`: ECR registry URL for web and API images
+- `ECS_CLUSTER_NAME`: ECS cluster name
+- `ECS_WEB_SERVICE_NAME`: Web service name
+- `ECS_API_SERVICE_NAME`: API service name
+
+These secrets enable GitHub Actions to deploy to AWS without long-lived credentials.
+
+#### Verification
+
+Check that infrastructure is running:
+
+```bash
+# List ECS cluster
+aws ecs describe-clusters --clusters rewards-app-cluster
+
+# List ECR repositories
+aws ecr describe-repositories
+
+# Check RDS instance
+aws rds describe-db-instances --db-instance-identifier rewards-app-db
+```
+
 ## Deployment Process
 
 ### Automated Deployment (Recommended)
 
-Deployments are automated via GitHub Actions on push to `main`:
+Deployments are triggered by pushing to the `deploy` branch. You can deploy any branch:
 
 ```bash
-git push origin main
+# Deploy from main branch
+git push origin main:deploy
+
+# Deploy from a feature branch (for testing)
+git push origin <your-branch-name>:deploy
 ```
 
-The workflow:
+The GitHub Actions workflow will:
 
-1. Builds Docker images for web and API
-2. Pushes images to ECR (tagged with git SHA and `latest`)
-3. Runs database migrations as one-off Fargate task
-4. Updates ECS services with new images
-5. Waits for services to stabilize
-6. Outputs public IPs for web and API
+1. Build Docker images for web and API
+2. Push images to ECR (tagged with git SHA and `latest`)
+3. Run database migrations as one-off Fargate task
+4. Update ECS services with new images
+5. Wait for services to stabilize
+6. Output public IPs for web and API
+
+Monitor progress in the GitHub Actions tab.
 
 ### Manual Deployment
 
-For emergency deployments or testing:
+For emergency deployments (after infrastructure is set up):
+
+**Trigger via GitHub Actions UI:**
 
 ```bash
-# Trigger via GitHub Actions UI
-# Actions > Deploy to AWS ECS > Run workflow
+# Go to Actions > Deploy to AWS ECS > Run workflow
+# Select the branch to deploy
 ```
 
-Or deploy locally with AWS credentials:
+**Or deploy locally with AWS credentials:**
 
 ```bash
 # Build and push images
