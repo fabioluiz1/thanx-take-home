@@ -57,7 +57,7 @@ RUN mkdir -p /var/cache/nginx/client_temp \
     chmod -R 755 /var/cache/nginx
 
 # Install curl for healthcheck (not included in alpine by default)
-RUN apk add --no-cache curl=8.5.0-r0
+RUN apk add --no-cache curl=8.12.1-r1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
