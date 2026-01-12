@@ -39,11 +39,21 @@ set -Ux TF_VAR_budget_email "your-email@example.com"
 
 **Note**: This email will receive budget alerts when you reach 80%, 100%, and forecasted 100% of the $10/month budget.
 
-#### Step 3: Bootstrap Terraform State Backend
+#### Step 3: Authenticate with AWS SSO
+
+Before bootstrapping, ensure your AWS SSO session is valid:
+
+```bash
+aws sso login --profile admin
+```
+
+If authentication fails, you may need to reconfigure your SSO profile. See the [AWS Setup Guide](aws-setup.md#configure-aws-cli-authentication) for details.
+
+#### Step 4: Bootstrap Terraform State Backend
 
 ```bash
 cd terraform
-./bootstrap.sh
+AWS_PROFILE=admin ./bootstrap.sh
 ```
 
 This creates:
@@ -52,12 +62,12 @@ This creates:
 
 **Cost**: <$1/month
 
-#### Step 4: Plan Infrastructure Changes
+#### Step 5: Plan Infrastructure Changes
 
 From the `terraform/` directory:
 
 ```bash
-terraform plan -out=tfplan
+AWS_PROFILE=admin terraform plan -out=tfplan
 ```
 
 Review the plan carefully. This shows all AWS resources that will be created:
@@ -67,7 +77,7 @@ Review the plan carefully. This shows all AWS resources that will be created:
 - IAM roles and policies
 - VPC and networking
 
-#### Step 5: Apply Infrastructure Changes
+#### Step 6: Apply Infrastructure Changes
 
 Apply the plan with AdministratorAccess (required for IAM resource creation):
 
@@ -81,7 +91,7 @@ AWS_PROFILE=admin terraform apply tfplan
 
 **Cost**: ~$27/month for demo/testing environment (Fargate Spot, RDS micro, CloudWatch)
 
-#### Step 6: Configure GitHub Actions Secrets
+#### Step 7: Configure GitHub Actions Secrets
 
 From the `terraform/` directory:
 
@@ -106,13 +116,13 @@ Check that infrastructure is running:
 
 ```bash
 # List ECS cluster
-aws ecs describe-clusters --clusters rewards-app-cluster
+aws ecs describe-clusters --clusters rewards-app-cluster --profile admin
 
 # List ECR repositories
-aws ecr describe-repositories
+aws ecr describe-repositories --profile admin
 
 # Check RDS instance
-aws rds describe-db-instances --db-instance-identifier rewards-app-db
+aws rds describe-db-instances --db-instance-identifier rewards-app-db --profile admin
 ```
 
 ## Deployment Process
