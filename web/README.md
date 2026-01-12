@@ -924,11 +924,16 @@ See [/docs/deployment.md](/docs/deployment.md) for:
 
 ## Resources
 
+### Project Documentation
+
+- [Architecture & Design Decisions](/architecture.md)
+- [API Backend Documentation](/api/README.md)
+
+### External References
+
 - [React Documentation](https://react.dev)
 - [Redux Toolkit Documentation](https://redux-toolkit.js.org)
 - [Vite Documentation](https://vite.dev)
 - [Vitest Documentation](https://vitest.dev)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs)
-- [Architecture & Design Decisions](/architecture.md)
-- [API Backend Documentation](/api/README.md)
