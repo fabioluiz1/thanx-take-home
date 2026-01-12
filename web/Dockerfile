@@ -12,6 +12,11 @@ ARG VITE_GIT_SHA
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 
+# Install CA certificates for SSL connections (required for Sentry API)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package.json bun.lockb ./
 
