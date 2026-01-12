@@ -19,13 +19,13 @@ variable "environment" {
 variable "github_org" {
   description = "GitHub organization or username"
   type        = string
-  default     = "fabiolnm"
+  default     = "fabioluiz1"
 }
 
 variable "github_repo" {
   description = "GitHub repository name"
   type        = string
-  default     = "rewards-app"
+  default     = "thanx-take-home"
 }
 
 # VPC Configuration
