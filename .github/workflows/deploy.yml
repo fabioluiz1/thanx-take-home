@@ -25,6 +25,21 @@ jobs:
           role-to-assume: ${{ secrets.OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.10.4
+
+      - name: Terraform Plan
+        run: |
+          cd terraform
+          terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve tfplan
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -166,6 +181,82 @@ jobs:
           fi
 
           echo "✅ Migrations completed successfully"
+
+      - name: Run database seeds
+        run: |
+          echo "Running database seeds as one-off Fargate task..."
+
+          # Get the VPC and subnet configuration from the API service
+          SERVICE_CONFIG=$(aws ecs describe-services \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --services ${{ secrets.ECS_API_SERVICE }} \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration')
+
+          SUBNETS=$(echo $SERVICE_CONFIG | jq -r '.subnets | join(",")')
+          SECURITY_GROUPS=$(echo $SERVICE_CONFIG | jq -r '.securityGroups | join(",")')
+
+          # Run seeds task using the current task definition
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --task-definition ${{ steps.update-task-def.outputs.task_definition_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=ENABLED}" \
+            --overrides '{
+              "containerOverrides": [{
+                "name": "api",
+                "command": ["bundle", "exec", "rails", "db:seed"]
+              }]
+            }' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "Seed task ARN: $TASK_ARN"
+
+          # Wait for task to complete
+          echo "Waiting for seeds to complete..."
+          aws ecs wait tasks-stopped \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --tasks $TASK_ARN
+
+          # Check exit code
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "❌ Seeds failed with exit code: $EXIT_CODE"
+
+            # Fetch CloudWatch logs for debugging
+            echo ""
+            echo "Fetching seed logs from CloudWatch..."
+
+            # Get log configuration from task definition
+            TASK_DEF=$(aws ecs describe-task-definition \
+              --task-definition ${{ steps.update-task-def.outputs.task_definition_arn }} \
+              --query 'taskDefinition.containerDefinitions[0].logConfiguration.options')
+
+            LOG_GROUP=$(echo $TASK_DEF | jq -r '.["awslogs-group"]')
+            LOG_PREFIX=$(echo $TASK_DEF | jq -r '.["awslogs-stream-prefix"]')
+            TASK_ID=$(echo $TASK_ARN | awk -F/ '{print $NF}')
+            LOG_STREAM="${LOG_PREFIX}/api/${TASK_ID}"
+
+            echo "Log group: $LOG_GROUP"
+            echo "Log stream: $LOG_STREAM"
+            echo ""
+
+            aws logs get-log-events \
+              --log-group-name "$LOG_GROUP" \
+              --log-stream-name "$LOG_STREAM" \
+              --limit 100 \
+              --query 'events[*].message' \
+              --output text || echo "Could not fetch logs. Check CloudWatch at: $LOG_GROUP/$LOG_STREAM"
+
+            exit 1
+          fi
+
+          echo "✅ Seeds completed successfully"
 
       - name: Update web task definition with GIT_SHA
         id: update-web-task-def
