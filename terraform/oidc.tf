@@ -118,6 +118,31 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         ]
         Resource = "*"
       },
+      # S3 permissions (for Terraform state backend)
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+        ]
+        Resource = [
+          "arn:aws:s3:::rewards-app-tf-state-*",
+          "arn:aws:s3:::rewards-app-tf-state-*/*",
+        ]
+      },
+      # DynamoDB permissions (for Terraform state locking)
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+        ]
+        Resource = "arn:aws:dynamodb:*:*:table/rewards-app-tf-locks"
+      },
     ]
   })
 }

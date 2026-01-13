@@ -204,6 +204,47 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 aws s3 ls s3://rewards-app-tf-state-${ACCOUNT_ID}
 ```
 
+#### GitHub Actions Terraform Init Fails (S3 Permission Denied)
+
+If CD pipeline fails with `Error: Unable to access object "terraform.tfstate" in S3 bucket: Forbidden`:
+
+The GitHub Actions OIDC role is missing S3 and DynamoDB permissions. The `oidc.tf` file defines the permissions required:
+
+```hcl
+# S3 permissions for Terraform state
+{
+  Effect = "Allow"
+  Action = [
+    "s3:ListBucket",
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:DeleteObject",
+  ]
+  Resource = [
+    "arn:aws:s3:::rewards-app-tf-state-*",
+    "arn:aws:s3:::rewards-app-tf-state-*/*",
+  ]
+},
+# DynamoDB permissions for Terraform state locking
+{
+  Effect = "Allow"
+  Action = [
+    "dynamodb:DescribeTable",
+    "dynamodb:GetItem",
+    "dynamodb:PutItem",
+    "dynamodb:DeleteItem",
+  ]
+  Resource = "arn:aws:dynamodb:*:*:table/rewards-app-tf-locks"
+},
+```
+
+Solution: Apply Terraform to update the OIDC role:
+
+```bash
+export AWS_PROFILE=admin
+terraform apply
+```
+
 ### State Lock Issues
 
 If Terraform state is locked:
