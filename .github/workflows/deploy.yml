@@ -328,14 +328,14 @@ jobs:
             WEB_STABLE=$(aws ecs describe-services \
               --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
               --services ${{ secrets.ECS_WEB_SERVICE }} \
-              --query 'services[0].deployments | length' \
-              --output text | sed 's/None/0/')
+              --query 'length(services[0].deployments)' \
+              --output text)
 
             API_STABLE=$(aws ecs describe-services \
               --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
               --services ${{ secrets.ECS_API_SERVICE }} \
-              --query 'services[0].deployments | length' \
-              --output text | sed 's/None/0/')
+              --query 'length(services[0].deployments)' \
+              --output text)
 
             if [ "$WEB_STABLE" -eq 1 ] && [ "$API_STABLE" -eq 1 ]; then
               echo ""
