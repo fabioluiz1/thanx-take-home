@@ -214,50 +214,78 @@ jobs:
             --force-new-deployment
 
       - name: Wait for services to stabilize
-        timeout-minutes: 15
+        timeout-minutes: 10
         run: |
-          echo "Checking web service deployment status..."
-          aws ecs describe-services \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --services ${{ secrets.ECS_WEB_SERVICE }} \
-            --query 'services[0].{runningCount:runningCount,desiredCount:desiredCount,deployments:deployments[*].{status:status,desiredCount:desiredCount,runningCount:runningCount,rolloutState:rolloutState},events:events[:3]}' \
-            --output json
+          # Function to fetch and log task status
+          check_service_status() {
+            local service_name=$1
+            local service_arn=$2
 
-          echo "Waiting for web service to stabilize..."
-          if ! aws ecs wait services-stable \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --services ${{ secrets.ECS_WEB_SERVICE }}; then
+            STATUS=$(aws ecs describe-services \
+              --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+              --services "$service_arn" \
+              --query 'services[0]' \
+              --output json)
 
-            echo "❌ Web service failed to stabilize"
-            echo ""
-            echo "Fetching recent task logs from CloudWatch..."
+            RUNNING=$(echo "$STATUS" | jq '.runningCount')
+            DESIRED=$(echo "$STATUS" | jq '.desiredCount')
 
-            # Get the most recent task ARN
+            echo "  $service_name: $RUNNING/$DESIRED running"
+
+            # Check for crashed/stopped tasks
+            TASKS=$(aws ecs list-tasks \
+              --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+              --service-name "$service_arn" \
+              --query 'taskArns' \
+              --output json)
+
+            TASK_COUNT=$(echo "$TASKS" | jq 'length')
+            if [ "$TASK_COUNT" -gt 0 ]; then
+              STOPPED_TASKS=$(aws ecs describe-tasks \
+                --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+                --tasks $(echo "$TASKS" | jq -r '.[]') \
+                --query 'tasks[?lastStatus==`STOPPED` || lastStatus==`DEPROVISIONING`]' \
+                --output json)
+
+              STOPPED_COUNT=$(echo "$STOPPED_TASKS" | jq 'length')
+              if [ "$STOPPED_COUNT" -gt 0 ]; then
+                echo "    ⚠️  Found $STOPPED_COUNT stopped/crashed tasks"
+                echo "$STOPPED_TASKS" | jq -r '.[] | "      - \(.taskDefinitionArn | split("/")[-1]): \(.lastStatus) (\(.stoppedReason // "no reason"))"'
+                return 1
+              fi
+            fi
+            return 0
+          }
+
+          # Function to fetch logs for a failed service
+          fetch_service_logs() {
+            local service_arn=$1
+            local log_prefix=$2
+
             TASK_ARN=$(aws ecs list-tasks \
               --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-              --service-name ${{ secrets.ECS_WEB_SERVICE }} \
+              --service-name "$service_arn" \
               --query 'taskArns[0]' \
               --output text)
 
             if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
               TASK_ID=$(echo $TASK_ARN | awk -F/ '{print $NF}')
 
-              # Get log configuration from task definition
               TASK_DEF=$(aws ecs describe-services \
                 --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-                --services ${{ secrets.ECS_WEB_SERVICE }} \
+                --services "$service_arn" \
                 --query 'services[0].taskDefinition' \
                 --output text)
 
               LOG_CONFIG=$(aws ecs describe-task-definition \
-                --task-definition $TASK_DEF \
+                --task-definition "$TASK_DEF" \
                 --query 'taskDefinition.containerDefinitions[0].logConfiguration.options')
 
               LOG_GROUP=$(echo $LOG_CONFIG | jq -r '.["awslogs-group"]')
               LOG_PREFIX=$(echo $LOG_CONFIG | jq -r '.["awslogs-stream-prefix"]')
-              LOG_STREAM="${LOG_PREFIX}/web/${TASK_ID}"
+              LOG_STREAM="${LOG_PREFIX}/${log_prefix}/${TASK_ID}"
 
-              echo "Log stream: $LOG_GROUP/$LOG_STREAM"
+              echo "📋 Logs: $LOG_GROUP/$LOG_STREAM"
               echo ""
 
               aws logs get-log-events \
@@ -265,64 +293,63 @@ jobs:
                 --log-stream-name "$LOG_STREAM" \
                 --limit 100 \
                 --query 'events[*].message' \
-                --output text || echo "Could not fetch logs. Check CloudWatch at: $LOG_GROUP/$LOG_STREAM"
+                --output text || echo "Could not fetch logs"
+            fi
+          }
+
+          echo "⏱️  Polling service health (max 10 minutes)..."
+          MAX_ATTEMPTS=60  # 60 * 10s = 10 minutes
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo ""
+            echo "Check $ATTEMPT/$MAX_ATTEMPTS:"
+
+            # Check web service
+            echo "🌐 Web service:"
+            if ! check_service_status "${{ secrets.ECS_WEB_SERVICE }}" "${{ secrets.ECS_WEB_SERVICE }}"; then
+              echo ""
+              echo "❌ Web service crashed"
+              fetch_service_logs "${{ secrets.ECS_WEB_SERVICE }}" "web"
+              exit 1
             fi
 
-            exit 1
-          fi
+            # Check API service
+            echo "🚀 API service:"
+            if ! check_service_status "${{ secrets.ECS_API_SERVICE }}" "${{ secrets.ECS_API_SERVICE }}"; then
+              echo ""
+              echo "❌ API service crashed"
+              fetch_service_logs "${{ secrets.ECS_API_SERVICE }}" "api"
+              exit 1
+            fi
 
-          echo "Checking API service deployment status..."
-          aws ecs describe-services \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --services ${{ secrets.ECS_API_SERVICE }} \
-            --query 'services[0].{runningCount:runningCount,desiredCount:desiredCount,deployments:deployments[*].{status:status,desiredCount:desiredCount,runningCount:runningCount,rolloutState:rolloutState},events:events[:3]}' \
-            --output json
-
-          echo "Waiting for API service to stabilize..."
-          if ! aws ecs wait services-stable \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --services ${{ secrets.ECS_API_SERVICE }}; then
-
-            echo "❌ API service failed to stabilize"
-            echo ""
-            echo "Fetching recent task logs from CloudWatch..."
-
-            # Get the most recent task ARN
-            TASK_ARN=$(aws ecs list-tasks \
+            # Check if both services are stable
+            WEB_STABLE=$(aws ecs describe-services \
               --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-              --service-name ${{ secrets.ECS_API_SERVICE }} \
-              --query 'taskArns[0]' \
+              --services ${{ secrets.ECS_WEB_SERVICE }} \
+              --query 'services[0].deployments | length' \
               --output text)
 
-            if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
-              TASK_ID=$(echo $TASK_ARN | awk -F/ '{print $NF}')
+            API_STABLE=$(aws ecs describe-services \
+              --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+              --services ${{ secrets.ECS_API_SERVICE }} \
+              --query 'services[0].deployments | length' \
+              --output text)
 
-              # Get log configuration from task definition
-              TASK_DEF=$(aws ecs describe-services \
-                --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-                --services ${{ secrets.ECS_API_SERVICE }} \
-                --query 'services[0].taskDefinition' \
-                --output text)
-
-              LOG_CONFIG=$(aws ecs describe-task-definition \
-                --task-definition $TASK_DEF \
-                --query 'taskDefinition.containerDefinitions[0].logConfiguration.options')
-
-              LOG_GROUP=$(echo $LOG_CONFIG | jq -r '.["awslogs-group"]')
-              LOG_PREFIX=$(echo $LOG_CONFIG | jq -r '.["awslogs-stream-prefix"]')
-              LOG_STREAM="${LOG_PREFIX}/api/${TASK_ID}"
-
-              echo "Log stream: $LOG_GROUP/$LOG_STREAM"
+            if [ "$WEB_STABLE" -eq 1 ] && [ "$API_STABLE" -eq 1 ]; then
               echo ""
-
-              aws logs get-log-events \
-                --log-group-name "$LOG_GROUP" \
-                --log-stream-name "$LOG_STREAM" \
-                --limit 100 \
-                --query 'events[*].message' \
-                --output text || echo "Could not fetch logs. Check CloudWatch at: $LOG_GROUP/$LOG_STREAM"
+              echo "✅ Services are stable!"
+              break
             fi
 
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              sleep 10
+            fi
+          done
+
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "❌ Deployment timeout after 10 minutes"
             exit 1
           fi
 
