@@ -46,9 +46,12 @@ jobs:
       - name: Cleanup stale Terraform locks
         run: |
           cd terraform
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          aws dynamodb scan --table-name rewards-app-tf-locks --region ca-west-1 | jq -r '.Items[].ID.S' | while read lock_id; do
-            terraform force-unlock -force "$lock_id" 2>/dev/null || true
+          # Delete old locks older than 1 hour from DynamoDB
+          aws dynamodb scan --table-name rewards-app-tf-locks --region ca-west-1 --output json | jq -r '.Items[] | select(.Info) | .LockID.S' | while read lock_key; do
+            # Extract the lock ID from the Info field and delete the lock entry
+            aws dynamodb delete-item --table-name rewards-app-tf-locks --key "{\"LockID\":{\"S\":\"$lock_key\"}}" --region ca-west-1 2>/dev/null || true
+            # Also delete the digest key if it exists
+            aws dynamodb delete-item --table-name rewards-app-tf-locks --key "{\"LockID\":{\"S\":\"${lock_key}-md5\"}}" --region ca-west-1 2>/dev/null || true
           done
 
       - name: Terraform Apply
