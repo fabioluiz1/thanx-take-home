@@ -149,6 +149,7 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         Action = [
           "iam:GetRole",
           "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
           "iam:GetRolePolicy",
           "iam:GetOpenIDConnectProvider",
           "iam:ListOpenIDConnectProviders",
@@ -169,6 +170,7 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         Action = [
           "ecr:DescribeRepositories",
           "ecr:CreateRepository",
+          "ecr:GetLifecyclePolicy",
           "ecr:PutLifecyclePolicy",
           "ecr:ListTagsForResource",
           "ecr:TagResource",
@@ -274,6 +276,9 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "servicediscovery:CreateService",
           "servicediscovery:GetNamespace",
           "servicediscovery:GetService",
+          "servicediscovery:ListTagsForResource",
+          "servicediscovery:TagResource",
+          "servicediscovery:UntagResource",
         ]
         Resource = "*"
       },
