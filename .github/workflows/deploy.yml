@@ -43,6 +43,14 @@ jobs:
           cd terraform
           terraform plan -lock=false -out=tfplan
 
+      - name: Cleanup stale Terraform locks
+        run: |
+          cd terraform
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          aws dynamodb scan --table-name rewards-app-tf-locks --region ca-west-1 | jq -r '.Items[].ID.S' | while read lock_id; do
+            terraform force-unlock -force "$lock_id" 2>/dev/null || true
+          done
+
       - name: Terraform Apply
         env:
           TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
