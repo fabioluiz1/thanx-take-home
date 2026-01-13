@@ -323,11 +323,11 @@ resource "aws_ecs_task_definition" "api" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:3000/up || exit 1"]
+        command     = ["CMD-SHELL", "curl -s http://localhost:3000/up > /dev/null || exit 1"]
         interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 120
+        timeout     = 10
+        retries     = 5
+        startPeriod = 300
       }
     }
   ])
