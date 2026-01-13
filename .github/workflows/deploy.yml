@@ -39,6 +39,8 @@ jobs:
       - name: Terraform Plan
         env:
           TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
+          TF_VAR_sentry_dsn: ${{ secrets.SENTRY_DSN_API }}
+          TF_VAR_git_sha: ${{ github.sha }}
         run: |
           cd terraform
           terraform plan -lock=false -out=tfplan
@@ -57,6 +59,8 @@ jobs:
       - name: Terraform Apply
         env:
           TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
+          TF_VAR_sentry_dsn: ${{ secrets.SENTRY_DSN_API }}
+          TF_VAR_git_sha: ${{ github.sha }}
         run: |
           cd terraform
           terraform apply -auto-approve tfplan
@@ -76,6 +80,7 @@ jobs:
           docker build \
             --build-arg VITE_SENTRY_DSN=${{ secrets.SENTRY_DSN_WEB }} \
             --build-arg VITE_GIT_SHA=${{ github.sha }} \
+            --build-arg VITE_API_URL=/api/v1 \
             --build-arg SENTRY_ORG=${{ secrets.SENTRY_ORG }} \
             --build-arg SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT_WEB }} \
             --secret id=SENTRY_AUTH_TOKEN,src=/tmp/sentry_auth_token \
