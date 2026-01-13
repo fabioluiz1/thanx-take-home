@@ -206,9 +206,11 @@ aws s3 ls s3://rewards-app-tf-state-${ACCOUNT_ID}
 
 #### GitHub Actions Terraform Init Fails (S3 Permission Denied)
 
-If CD pipeline fails with `Error: Unable to access object "terraform.tfstate" in S3 bucket: Forbidden`:
+If CD pipeline fails with `Error: Unable to access object "terraform.tfstate"
+in S3 bucket: Forbidden`:
 
-The GitHub Actions OIDC role is missing S3 and DynamoDB permissions. The `oidc.tf` file defines the permissions required:
+The GitHub Actions OIDC role is missing S3 and DynamoDB permissions. The
+`oidc.tf` file defines the permissions required:
 
 ```hcl
 # S3 permissions for Terraform state
