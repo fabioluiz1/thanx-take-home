@@ -19,13 +19,13 @@ variable "environment" {
 variable "github_org" {
   description = "GitHub organization or username"
   type        = string
-  default     = "fabiolnm"
+  default     = "fabioluiz1"
 }
 
 variable "github_repo" {
   description = "GitHub repository name"
   type        = string
-  default     = "rewards-app"
+  default     = "thanx-take-home"
 }
 
 # VPC Configuration
@@ -107,6 +107,7 @@ variable "budget_limit" {
 variable "budget_email" {
   description = "Email address for budget notifications (set via TF_VAR_budget_email)"
   type        = string
+  default     = "devops@example.com"
 }
 
 # Sentry Configuration

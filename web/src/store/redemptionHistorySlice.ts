@@ -1,9 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { apiClient, ApiError } from "../services/api";
-import type {
-  Redemption,
-  RedemptionHistoryState,
-} from "../types/redemption";
+import type { Redemption, RedemptionHistoryState } from "../types/redemption";
 
 const initialState: RedemptionHistoryState = {
   redemptions: [],

@@ -1,9 +1,8 @@
 # Demo user with initial points balance
-User.find_or_create_by!(email: "demo@example.com") do |user|
-  user.points_balance = 500
-end
+user = User.find_or_create_by!(email: "demo@example.com")
+user.update(points_balance: 500)
 
-puts "Created demo user: demo@example.com with 500 points"
+puts "Seeded demo user: demo@example.com with 500 points"
 
 # Demo rewards with varied costs and availability
 # NOTE: Image URLs are from Unsplash for demo purposes only.
@@ -61,12 +60,9 @@ rewards_data = [
 ]
 
 rewards_data.each do |data|
-  Reward.find_or_create_by!(name: data[:name]) do |reward|
-    reward.description = data[:description]
-    reward.points_cost = data[:points_cost]
-    reward.image_url = data[:image_url]
-    reward.available = data[:available]
-  end
+  reward = Reward.find_or_initialize_by(name: data[:name])
+  reward.assign_attributes(data)
+  reward.save!
 end
 
-puts "Created #{rewards_data.length} demo rewards"
+puts "Seeded #{rewards_data.length} demo rewards"

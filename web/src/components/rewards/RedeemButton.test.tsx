@@ -39,7 +39,9 @@ describe("RedeemButton", () => {
         onClick={vi.fn()}
       />,
     );
-    expect(screen.getByTestId("redeem-button")).toHaveTextContent("Unavailable");
+    expect(screen.getByTestId("redeem-button")).toHaveTextContent(
+      "Unavailable",
+    );
     expect(screen.getByTestId("redeem-button")).toBeDisabled();
   });
 
@@ -83,6 +85,8 @@ describe("RedeemButton", () => {
         onClick={vi.fn()}
       />,
     );
-    expect(screen.getByTestId("redeem-button")).toHaveTextContent("Unavailable");
+    expect(screen.getByTestId("redeem-button")).toHaveTextContent(
+      "Unavailable",
+    );
   });
 });

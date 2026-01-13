@@ -147,15 +147,17 @@ If your AWS account doesn't have SSO configured yet:
 
 ## AWS CLI Setup
 
-### Configure AWS SSO
+### Configure AWS SSO with Admin Profile
+
+Create the `admin` profile for Terraform deployments:
 
 ```bash
-aws configure sso
+aws configure sso --profile admin
 ```
 
 Enter:
 
-- SSO session name: `rewards-app` (or your preferred name)
+- SSO session name: `rewards-app-admin`
 - SSO start URL: Your AWS SSO portal URL from previous step (e.g., `https://rewards-app.awsapps.com/start`)
 - SSO region: The region where your SSO is configured (e.g., `ca-west-1`)
 - SSO registration scopes: `sso:account:access` (default)
@@ -163,23 +165,41 @@ Enter:
 The CLI will open your browser to authenticate. After authentication:
 
 - Select your AWS account from the list
-- Choose the appropriate IAM role (e.g., `AdministratorAccess`)
+- Choose the **AdministratorAccess** permission set (required for Terraform)
 - Default region: `ca-west-1`
 - Default output format: `json`
-- CLI profile name: `default` (or your preferred profile name)
+
+**Important**: Use `admin` as the CLI profile name. Terraform deployment requires
+this profile.
+
+### Set Admin Profile as Default (Optional)
+
+To avoid typing `AWS_PROFILE=admin` on every command, set it as the default:
+
+```bash
+# Bash/Zsh (add to ~/.bashrc or ~/.zshrc)
+export AWS_PROFILE=admin
+
+# Fish (persistent)
+set -Ux AWS_PROFILE admin
+```
+
+Or configure it in `~/.aws/config`:
+
+```bash
+aws configure set profile admin
+```
 
 ### Login to SSO Session
 
 SSO credentials expire after a period. To refresh:
 
 ```bash
+# If using admin as default profile
 aws sso login
-```
 
-Or, if using a named profile:
-
-```bash
-aws sso login --profile rewards-app
+# Or explicitly specify the profile
+aws sso login --profile admin
 ```
 
 ### Verify Configuration
@@ -216,50 +236,19 @@ creation of:
 - ECS task application roles
 - GitHub Actions OIDC provider
 
-### Configure Admin Profile
+### Verify Admin Profile Permissions
 
-If you only have PowerUserAccess configured, add an AdministratorAccess profile:
-
-```bash
-aws configure sso --profile admin
-```
-
-Enter:
-
-- SSO session name: `rewards-app-admin`
-- SSO start URL: Your AWS SSO portal URL (e.g., `https://rewards-app.awsapps.com/start`)
-- SSO region: `ca-west-1`
-- Select the **AdministratorAccess** permission set
-- Default region: `ca-west-1`
-- Default output format: `json`
-
-### Verify Permissions
-
-Check current profile:
+Check that the admin profile has AdministratorAccess:
 
 ```bash
-aws sts get-caller-identity
+aws sts get-caller-identity --profile admin
 ```
 
 Test IAM permissions:
 
 ```bash
-# Should succeed with AdministratorAccess, fail with PowerUserAccess
-aws iam list-roles --max-items 1
-```
-
-### Using Admin Profile
-
-Set for entire session:
-
-```bash
-export AWS_PROFILE=admin
-```
-
-Or use inline for specific commands:
-
-```bash
-AWS_PROFILE=admin terraform apply tfplan
+# Should succeed with admin profile
+aws iam list-roles --max-items 1 --profile admin
 ```
 
 ## Cost Management
@@ -297,7 +286,20 @@ export TF_VAR_budget_email="your-email@example.com"
 
 ## Deployment Steps
 
-### 1. Bootstrap Infrastructure
+### 1. Set Admin Profile as Default (Recommended)
+
+Before bootstrapping, set the admin profile as default to avoid typing it repeatedly:
+
+```bash
+# Bash/Zsh (temporary, current session only)
+export AWS_PROFILE=admin
+
+# Or persistently add to ~/.bashrc or ~/.zshrc
+echo 'export AWS_PROFILE=admin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 2. Bootstrap Infrastructure
 
 Create Terraform state backend and initialize:
 
@@ -314,22 +316,22 @@ This creates:
 
 **Cost**: <$1/month
 
-### 2. Plan and Apply
+### 3. Plan and Apply
 
 ```bash
 terraform plan -out=tfplan
-AWS_PROFILE=admin terraform apply tfplan
+terraform apply tfplan
 ```
 
-**Note**: `terraform apply` requires AdministratorAccess to create IAM
-roles and OIDC providers. See
+**Note**: Requires AdministratorAccess profile. If you didn't set admin as default,
+use `AWS_PROFILE=admin terraform apply tfplan` instead. See
 [IAM Permissions for Terraform](#iam-permissions-for-terraform).
 
 Review the plan carefully before applying.
 
 **Deployment time**: 10-15 minutes (RDS takes longest)
 
-### 3. Setup GitHub Secrets
+### 4. Setup GitHub Secrets
 
 Automatically configure GitHub repository secrets:
 
@@ -344,7 +346,7 @@ This configures:
 - ECR repository URLs
 - ECS cluster and service names
 
-### 4. Trigger Deployment
+### 5. Trigger Deployment
 
 Push to deploy branch or manually trigger workflow:
 
@@ -415,10 +417,11 @@ curl http://<web-ip>
 
 ```bash
 cd terraform
-AWS_PROFILE=admin terraform destroy -auto-approve
+terraform destroy -auto-approve
 ```
 
-**Note**: Requires AdministratorAccess to delete IAM resources.
+**Note**: Requires AdministratorAccess profile. If you didn't set admin as default,
+use `AWS_PROFILE=admin terraform destroy -auto-approve` instead.
 
 Removes:
 
@@ -482,6 +485,46 @@ Ensure bootstrap script ran successfully:
 ```bash
 aws s3 ls | grep rewards-app-tf-state
 ```
+
+#### Error: GitHub Actions Terraform Init fails with S3 Permission Denied
+
+Symptom: CD pipeline fails at "Terraform Init" step with:
+
+```text
+Error: Error refreshing state: Unable to access object "terraform.tfstate"
+in S3 bucket: operation error S3: HeadObject... api error Forbidden:
+Forbidden
+```
+
+Cause: The GitHub Actions OIDC role is missing S3 and DynamoDB permissions
+required to access Terraform state.
+
+Solution:
+
+1. Ensure `terraform/oidc.tf` includes S3 and DynamoDB permissions
+   (it should already):
+   - S3: `ListBucket`, `GetObject`, `PutObject`, `DeleteObject` on
+     `rewards-app-tf-state-*` buckets
+   - DynamoDB: `DescribeTable`, `GetItem`, `PutItem`, `DeleteItem` on
+     `rewards-app-tf-locks` table
+
+2. Apply Terraform to update the OIDC role:
+
+   ```bash
+   export AWS_PROFILE=admin
+   terraform apply
+   ```
+
+3. Re-run the CD pipeline:
+
+   ```bash
+   git push origin deploy
+   ```
+
+The permissions are defined in `terraform/oidc.tf` and automatically added
+when you run `terraform apply`. See
+[Terraform Backend Configuration](../terraform/README.md#backend-configuration)
+for more details.
 
 #### Error: Invalid credentials
 

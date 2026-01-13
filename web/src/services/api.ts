@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 const getUserId = (): string => localStorage.getItem("userId") || "1";
 
@@ -14,7 +14,7 @@ class ApiError extends Error {
 
 export const apiClient = {
   async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
         "Content-Type": "application/json",
         "X-User-Id": getUserId(),
@@ -22,7 +22,8 @@ export const apiClient = {
     });
 
     if (!response.ok) {
-      const message = response.statusText || `Request failed with status ${response.status}`;
+      const message =
+        response.statusText || `Request failed with status ${response.status}`;
       throw new ApiError(message, response.status);
     }
 
@@ -30,7 +31,7 @@ export const apiClient = {
   },
 
   async post<T, D = unknown>(path: string, data: D): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

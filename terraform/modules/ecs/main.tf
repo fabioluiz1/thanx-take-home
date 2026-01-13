@@ -33,6 +33,56 @@ resource "aws_cloudwatch_log_group" "api" {
   }
 }
 
+# CloudMap Private Namespace for service discovery
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name = "${var.project_name}.local"
+  vpc  = var.vpc_id
+
+  tags = {
+    Name = "${var.project_name}-cloudmap-namespace"
+  }
+}
+
+# CloudMap Service for API
+resource "aws_service_discovery_service" "api" {
+  name = "api"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  tags = {
+    Name = "${var.project_name}-api-discovery"
+  }
+}
+
+# CloudMap Service for Web
+resource "aws_service_discovery_service" "web" {
+  name = "web"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  tags = {
+    Name = "${var.project_name}-web-discovery"
+  }
+}
+
 # Security Group for ECS Tasks
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.project_name}-ecs-tasks-sg"
@@ -185,7 +235,7 @@ resource "aws_ecs_task_definition" "web" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -273,11 +323,11 @@ resource "aws_ecs_task_definition" "api" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:3000/up || exit 1"]
+        command     = ["CMD-SHELL", "curl -s http://localhost:3000/up > /dev/null || exit 1"]
         interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 120
+        timeout     = 10
+        retries     = 5
+        startPeriod = 300
       }
     }
   ])
@@ -304,6 +354,11 @@ resource "aws_ecs_service" "web" {
     subnets          = var.public_subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.web.arn
+    container_name = "web"
   }
 
   deployment_maximum_percent         = 200
@@ -333,6 +388,11 @@ resource "aws_ecs_service" "api" {
     subnets          = var.public_subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.api.arn
+    container_name = "api"
   }
 
   deployment_maximum_percent         = 200

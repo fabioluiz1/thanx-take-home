@@ -9,8 +9,14 @@ WORKDIR /app
 # Sentry build arguments (non-sensitive)
 ARG VITE_SENTRY_DSN
 ARG VITE_GIT_SHA
+ARG VITE_API_URL
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
+
+# Install CA certificates for SSL connections (required for Sentry API)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package.json bun.lockb ./
@@ -26,6 +32,7 @@ COPY . .
 # VITE_* vars are public (embedded in JS), others are build-time only
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 ENV VITE_GIT_SHA=$VITE_GIT_SHA
+ENV VITE_API_URL=$VITE_API_URL
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
     SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN 2>/dev/null) \
     SENTRY_ORG=$SENTRY_ORG \
@@ -52,7 +59,7 @@ RUN mkdir -p /var/cache/nginx/client_temp \
     chmod -R 755 /var/cache/nginx
 
 # Install curl for healthcheck (not included in alpine by default)
-RUN apk add --no-cache curl=8.5.0-r0
+RUN apk add --no-cache curl=8.12.1-r1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
