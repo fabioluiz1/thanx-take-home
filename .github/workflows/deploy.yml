@@ -48,7 +48,7 @@ jobs:
           TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
         run: |
           cd terraform
-          terraform apply -auto-approve tfplan
+          terraform apply -lock=false -auto-approve tfplan
 
       - name: Login to Amazon ECR
         id: login-ecr

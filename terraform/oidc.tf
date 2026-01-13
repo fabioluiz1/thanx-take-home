@@ -143,6 +143,117 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         ]
         Resource = "arn:aws:dynamodb:*:*:table/rewards-app-tf-locks"
       },
+      # IAM permissions (for terraform plan/apply to read/create roles)
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetOpenIDConnectProvider",
+          "iam:CreateRole",
+          "iam:CreateOpenIDConnectProvider",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+        ]
+        Resource = "*"
+      },
+      # ECR permissions (for terraform plan/apply to manage repositories)
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:DescribeRepositories",
+          "ecr:CreateRepository",
+          "ecr:PutLifecyclePolicy",
+        ]
+        Resource = "*"
+      },
+      # ECS permissions (for terraform plan/apply to manage clusters)
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeClusters",
+          "ecs:CreateCluster",
+          "ecs:DescribeContainerInstances",
+        ]
+        Resource = "*"
+      },
+      # CloudWatch Logs permissions (for terraform plan/apply to manage log groups)
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups",
+          "logs:CreateLogGroup",
+          "logs:TagLogGroup",
+        ]
+        Resource = "*"
+      },
+      # SSM permissions (for terraform plan/apply to manage parameters)
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:DescribeParameters",
+          "ssm:PutParameter",
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
+      },
+      # EC2 permissions (for terraform plan/apply to manage VPC resources)
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeInternetGateways",
+          "ec2:DescribeNatGateways",
+          "ec2:CreateVpc",
+          "ec2:CreateSubnet",
+          "ec2:CreateSecurityGroup",
+          "ec2:CreateRouteTable",
+          "ec2:CreateInternetGateway",
+          "ec2:CreateNatGateway",
+          "ec2:AllocateAddress",
+          "ec2:AssociateRouteTable",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:AttachInternetGateway",
+          "ec2:ModifyVpcAttribute",
+        ]
+        Resource = "*"
+      },
+      # RDS permissions (for terraform plan/apply to manage database)
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBSubnetGroups",
+          "rds:CreateDBSubnetGroup",
+          "rds:CreateDBInstance",
+          "rds:ModifyDBInstance",
+        ]
+        Resource = "*"
+      },
+      # Budget permissions (for terraform plan/apply to manage cost alerts)
+      {
+        Effect = "Allow"
+        Action = [
+          "budgets:ViewBudget",
+          "budgets:CreateBudget",
+          "budgets:UpdateBudget",
+        ]
+        Resource = "*"
+      },
+      # Service Discovery permissions (for terraform plan/apply to manage service discovery)
+      {
+        Effect = "Allow"
+        Action = [
+          "servicediscovery:CreatePrivateDnsNamespace",
+          "servicediscovery:CreateService",
+          "servicediscovery:GetNamespace",
+          "servicediscovery:GetService",
+        ]
+        Resource = "*"
+      },
     ]
   })
 }
