@@ -60,8 +60,9 @@ rewards_data = [
 ]
 
 rewards_data.each do |data|
-  reward = Reward.find_or_create_by!(name: data[:name])
-  reward.update(data)
+  reward = Reward.find_or_initialize_by(name: data[:name])
+  reward.assign_attributes(data)
+  reward.save!
 end
 
 puts "Seeded #{rewards_data.length} demo rewards"
