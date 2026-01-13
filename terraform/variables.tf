@@ -107,6 +107,7 @@ variable "budget_limit" {
 variable "budget_email" {
   description = "Email address for budget notifications (set via TF_VAR_budget_email)"
   type        = string
+  default     = "devops@example.com"
 }
 
 # Sentry Configuration
