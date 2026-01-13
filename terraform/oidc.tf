@@ -203,9 +203,12 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         Effect = "Allow"
         Action = [
           "ssm:DescribeParameters",
+          "ssm:GetParameter",
           "ssm:PutParameter",
+          "ssm:AddTagsToResource",
+          "ssm:ListTagsForResource",
         ]
-        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
+        Resource = "*"
       },
       # EC2 permissions (for terraform plan/apply to manage VPC resources)
       {
@@ -244,6 +247,9 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "rds:CreateDBSubnetGroup",
           "rds:CreateDBInstance",
           "rds:ModifyDBInstance",
+          "rds:ListTagsForResource",
+          "rds:AddTagsToResource",
+          "rds:RemoveTagsFromResource",
         ]
         Resource = "*"
       },
