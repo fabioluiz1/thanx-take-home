@@ -33,7 +33,8 @@ jobs:
       - name: Terraform Init
         run: |
           cd terraform
-          terraform init
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          terraform init -backend-config="bucket=rewards-app-tf-state-${ACCOUNT_ID}"
 
       - name: Terraform Plan
         run: |
