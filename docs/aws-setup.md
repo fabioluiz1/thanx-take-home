@@ -486,6 +486,37 @@ Ensure bootstrap script ran successfully:
 aws s3 ls | grep rewards-app-tf-state
 ```
 
+#### Error: GitHub Actions Terraform Init fails with S3 Permission Denied
+
+Symptom: CD pipeline fails at "Terraform Init" step with:
+
+```text
+Error: Error refreshing state: Unable to access object "terraform.tfstate" in S3 bucket: operation error S3: HeadObject... api error Forbidden: Forbidden
+```
+
+Cause: The GitHub Actions OIDC role is missing S3 and DynamoDB permissions required to access Terraform state.
+
+Solution:
+
+1. Ensure `terraform/oidc.tf` includes S3 and DynamoDB permissions (it should already):
+   - S3: `ListBucket`, `GetObject`, `PutObject`, `DeleteObject` on `rewards-app-tf-state-*` buckets
+   - DynamoDB: `DescribeTable`, `GetItem`, `PutItem`, `DeleteItem` on `rewards-app-tf-locks` table
+
+2. Apply Terraform to update the OIDC role with these permissions:
+
+```bash
+export AWS_PROFILE=admin
+terraform apply
+```
+
+3. Re-run the CD pipeline:
+
+```bash
+git push origin deploy
+```
+
+The permissions are defined in `terraform/oidc.tf` and automatically added when you run `terraform apply`. See [Terraform Backend Configuration](../terraform/README.md#backend-configuration) for more details.
+
 #### Error: Invalid credentials
 
 Reconfigure AWS CLI:
