@@ -148,12 +148,18 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         Effect = "Allow"
         Action = [
           "iam:GetRole",
+          "iam:ListRolePolicies",
+          "iam:GetRolePolicy",
           "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
           "iam:CreateRole",
           "iam:CreateOpenIDConnectProvider",
           "iam:UpdateAssumeRolePolicy",
           "iam:PutRolePolicy",
           "iam:DeleteRolePolicy",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:ListRoleTags",
         ]
         Resource = "*"
       },
@@ -164,6 +170,9 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "ecr:DescribeRepositories",
           "ecr:CreateRepository",
           "ecr:PutLifecyclePolicy",
+          "ecr:ListTagsForResource",
+          "ecr:TagResource",
+          "ecr:UntagResource",
         ]
         Resource = "*"
       },
@@ -184,6 +193,8 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "logs:DescribeLogGroups",
           "logs:CreateLogGroup",
           "logs:TagLogGroup",
+          "logs:ListTagsForResource",
+          "logs:UntagResource",
         ]
         Resource = "*"
       },
@@ -201,6 +212,7 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
         Effect = "Allow"
         Action = [
           "ec2:DescribeVpcs",
+          "ec2:DescribeVpcAttribute",
           "ec2:DescribeSubnets",
           "ec2:DescribeSecurityGroups",
           "ec2:DescribeRouteTables",
@@ -218,6 +230,8 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "ec2:AuthorizeSecurityGroupEgress",
           "ec2:AttachInternetGateway",
           "ec2:ModifyVpcAttribute",
+          "ec2:CreateTags",
+          "ec2:DescribeTags",
         ]
         Resource = "*"
       },
@@ -240,6 +254,9 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "budgets:ViewBudget",
           "budgets:CreateBudget",
           "budgets:UpdateBudget",
+          "budgets:ListTagsForResource",
+          "budgets:TagResource",
+          "budgets:UntagResource",
         ]
         Resource = "*"
       },
