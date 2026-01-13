@@ -74,8 +74,10 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "ecs:DescribeTasks",
           "ecs:ListTasks",
           "ecs:RegisterTaskDefinition",
+          "ecs:DeregisterTaskDefinition",
           "ecs:UpdateService",
           "ecs:RunTask",
+          "ecs:TagResource",
         ]
         Resource = "*"
       },
@@ -140,6 +142,7 @@ resource "aws_iam_role_policy" "github_actions_deploy" {
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
+          "dynamodb:Scan",
         ]
         Resource = "arn:aws:dynamodb:*:*:table/rewards-app-tf-locks"
       },
