@@ -37,11 +37,15 @@ jobs:
           terraform init -backend-config="bucket=rewards-app-tf-state-${ACCOUNT_ID}"
 
       - name: Terraform Plan
+        env:
+          TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
         run: |
           cd terraform
-          terraform plan -out=tfplan
+          terraform plan -lock=false -out=tfplan
 
       - name: Terraform Apply
+        env:
+          TF_VAR_budget_email: ${{ github.event.pusher.email || 'devops@example.com' }}
         run: |
           cd terraform
           terraform apply -auto-approve tfplan
