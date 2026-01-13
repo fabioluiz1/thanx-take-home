@@ -167,12 +167,41 @@ jobs:
 
           echo "✅ Migrations completed successfully"
 
+      - name: Update web task definition with GIT_SHA
+        id: update-web-task-def
+        run: |
+          # Get current web task definition
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ secrets.ECS_WEB_TASK_DEFINITION }} \
+            --query 'taskDefinition')
+
+          # Update GIT_SHA in environment variables
+          UPDATED_TASK_DEF=$(echo "$TASK_DEF" | jq --arg sha "${{ github.sha }}" '
+            .containerDefinitions[0].environment = [
+              .containerDefinitions[0].environment[] |
+              if .name == "VITE_GIT_SHA" then .value = $sha else . end
+            ]
+          ')
+
+          # Remove fields that can't be included in register-task-definition
+          REGISTER_TASK_DEF=$(echo "$UPDATED_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+
+          # Register new task definition revision
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$REGISTER_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "task_definition_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
+          echo "Registered new web task definition: $NEW_TASK_DEF_ARN"
+
       - name: Update web service
         run: |
           echo "Updating web service..."
           aws ecs update-service \
             --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
             --service ${{ secrets.ECS_WEB_SERVICE }} \
+            --task-definition ${{ steps.update-web-task-def.outputs.task_definition_arn }} \
             --force-new-deployment
 
       - name: Update API service

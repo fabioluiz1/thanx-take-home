@@ -33,6 +33,56 @@ resource "aws_cloudwatch_log_group" "api" {
   }
 }
 
+# CloudMap Private Namespace for service discovery
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name = "${var.project_name}.local"
+  vpc  = var.vpc_id
+
+  tags = {
+    Name = "${var.project_name}-cloudmap-namespace"
+  }
+}
+
+# CloudMap Service for API
+resource "aws_service_discovery_service" "api" {
+  name = "api"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  tags = {
+    Name = "${var.project_name}-api-discovery"
+  }
+}
+
+# CloudMap Service for Web
+resource "aws_service_discovery_service" "web" {
+  name = "web"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  tags = {
+    Name = "${var.project_name}-web-discovery"
+  }
+}
+
 # Security Group for ECS Tasks
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.project_name}-ecs-tasks-sg"
@@ -306,6 +356,11 @@ resource "aws_ecs_service" "web" {
     assign_public_ip = true
   }
 
+  service_registries {
+    registry_arn   = aws_service_discovery_service.web.arn
+    container_name = "web"
+  }
+
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 100
 
@@ -333,6 +388,11 @@ resource "aws_ecs_service" "api" {
     subnets          = var.public_subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = true
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.api.arn
+    container_name = "api"
   }
 
   deployment_maximum_percent         = 200
